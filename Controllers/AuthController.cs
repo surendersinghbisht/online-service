@@ -18,13 +18,15 @@ namespace onilne_service.Controllers
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly IEmailService _emailService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService)
+        public AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
             _cache = cache;
             _emailService = emailService;
+            _logger = logger;
         }
 
         [HttpPost("send-otp")]
@@ -47,35 +49,44 @@ namespace onilne_service.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+public async Task<IActionResult> Register([FromBody] RegisterDto model)
+{
+    try
+    {
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var userName = model.Email;
-            var userExists = await _userManager.FindByNameAsync(model.Email);
-            if (userExists != null)
-                return BadRequest("User already exists!");
-
-            if (_cache.TryGetValue(model.Email, out _))
-                return BadRequest("OTP already sent. Please wait.");
-
-            var otp = new Random().Next(100000, 999999).ToString();
-
-            _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
-
-            await _emailService.SendOtpAsync(model.Email, otp);
-            Console.WriteLine($"OTP for {model.Email}: {otp}");
-
-            return Ok(new
-            {
-                success = true,
-                message = "OTP sent successfully"
-            });
-
+            _logger.LogWarning("Invalid model for {Email}", model?.Email);
+            return BadRequest(ModelState);
         }
 
+        var userExists = await _userManager.FindByNameAsync(model.Email);
+        if (userExists != null)
+        {
+            _logger.LogInformation("User already exists: {Email}", model.Email);
+            return BadRequest("User already exists!");
+        }
+
+        if (_cache.TryGetValue(model.Email, out _))
+        {
+            _logger.LogInformation("OTP already sent for {Email}", model.Email);
+            return BadRequest("OTP already sent. Please wait.");
+        }
+
+        var otp = new Random().Next(100000, 999999).ToString();
+        _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
+
+        await _emailService.SendOtpAsync(model.Email, otp);
+
+        _logger.LogInformation("OTP sent to {Email}", model.Email);
+
+        return Ok(new { success = true, message = "OTP sent successfully" });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error in Register for {Email}", model?.Email);
+        return StatusCode(500, "Something went wrong");
+    }
+}
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp(RegisterDto model) {
             var storedOtp = _cache.Get<string>(model.Email);
