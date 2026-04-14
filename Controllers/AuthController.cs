@@ -48,7 +48,6 @@ namespace onilne_service.Controllers
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
-        
         {
             if (!ModelState.IsValid)
             {
