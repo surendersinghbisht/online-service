@@ -1,0 +1,6 @@
+@onilne_service_HostAddress = http://localhost:5209
+
+GET {{onilne_service_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
