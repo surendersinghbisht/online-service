@@ -34,6 +34,7 @@ public partial class Aspnetuser
     public bool LockoutEnabled { get; set; }
 
     public int AccessFailedCount { get; set; }
+    public string withDotEmail { get; set; }
 
     public virtual ICollection<Aspnetuserclaim> Aspnetuserclaims { get; set; } = new List<Aspnetuserclaim>();
 

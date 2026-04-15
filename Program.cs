@@ -55,7 +55,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ));
 
 // ✅ Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 

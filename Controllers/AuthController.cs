@@ -4,6 +4,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using onilne_service.Contract;
 using onilne_service.DTOs;
+using onilne_service.Model;
+using System.Data.Entity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,13 +16,13 @@ namespace onilne_service.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger)
+        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -66,6 +68,24 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
             return BadRequest("User already exists!");
         }
 
+                var normalizedEmail = NormalizeEmail(model.Email);
+
+                var existingUser = await _userManager.Users
+                    .FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
+
+                if (existingUser != null)
+                {
+                    _logger.LogInformation("Email already exists: {Email}", model.Email);
+                    return BadRequest("Email already exists!");
+                }
+
+
+                var userWithPhone = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == model.PhoneNumber);
+                if (userWithPhone != null) {
+                    _logger.LogInformation("Phone Number already exists: {PhoneNumber}", model.PhoneNumber);
+                    return BadRequest("Phone Number already exists!");
+                }
+
         if (_cache.TryGetValue(model.Email, out _))
         {
             _logger.LogInformation("OTP already sent for {Email}", model.Email);
@@ -98,11 +118,12 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
 
             _cache.Remove(model.Email);
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
+                NormalizedCustomEmail = NormalizeEmail(model.Email)
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -123,10 +144,13 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            var normalizedEmail = NormalizeEmail(model.Email);
+
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
+
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-
                 var token = GenerateJwtToken(user);
 
                 return Ok(new AuthResponseDto
@@ -134,10 +158,18 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
                     Token = token,
                 });
             }
+
             return Unauthorized();
         }
+        private string NormalizeEmail(string email)
+        {
+            var parts = email.Split('@');
+            var local = parts[0].Replace(".", "");
+            return local + "@" + parts[1];
+        }
 
-        private string GenerateJwtToken(IdentityUser user)
+
+        private string GenerateJwtToken(ApplicationUser user)
         {
             var claims = new[]
             {
