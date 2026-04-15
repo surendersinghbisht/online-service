@@ -108,7 +108,7 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
     }
 }
         [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp(RegisterDto model) {
+        public async Task<IActionResult> VerifyOtp(VerifyOtp model) {
             var storedOtp = _cache.Get<string>(model.Email);
             if (storedOtp == null)
                 return BadRequest("OTP expired");
@@ -136,7 +136,7 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
                     UserName = model.Email,
                     Email = model.Email,
                     PhoneNumber = model.PhoneNumber,
-                    NormalizedCustomEmail = NormalizeEmail(model.Email)
+                    NormalizedCustomEmail = normalizedEmail
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -155,28 +155,50 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        public async Task<IActionResult> Login(LoginDto model)
         {
+            //normal login
             var normalizedEmail = NormalizeEmail(model.Email);
 
             var user = await _userManager.Users
                 .FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
 
-            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            //otp login 
+            if(model.Password == null)
             {
                 var otp = new Random().Next(100000, 999999).ToString();
                 _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
 
                 await _emailService.SendOtpAsync(model.Email, otp);
-                var token = GenerateJwtToken(user);
 
-                return Ok(new AuthResponseDto
+                return Ok(new ResponseStatus
                 {
-                    Token = token,
+                    Status = true,
+                    Message = "Otp sent successfully"
                 });
             }
 
-            return Unauthorized();
+        var isPasswordVaild = await _userManager.CheckPasswordAsync(user, model.Password);
+           if(!isPasswordVaild)
+            {
+                return BadRequest(new ResponseStatus
+                {
+                    Status = false,
+                    Message = "Wrong Password"
+                });
+
+            }
+                var token = GenerateJwtToken(user);
+
+            return Ok(new
+            {
+                Token = token,
+                status = true,
+                Message = "login successfull"
+            });
+           
+
+            
         }
         private string NormalizeEmail(string email)
         {

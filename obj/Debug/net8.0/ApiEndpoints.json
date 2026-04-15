@@ -57,7 +57,7 @@
     "Parameters": [
       {
         "Name": "model",
-        "Type": "onilne_service.DTOs.RegisterDto",
+        "Type": "onilne_service.DTOs.VerifyOtp",
         "IsRequired": true
       }
     ],

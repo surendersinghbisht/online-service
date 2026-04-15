@@ -14,4 +14,5 @@ namespace onilne_service.DTOs
         public string Password { get; set; } = string.Empty;
         public string? Otp { get; set; } = string.Empty;
     }
+   
 }
