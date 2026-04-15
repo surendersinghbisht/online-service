@@ -121,10 +121,10 @@ D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.build.json.cac
 D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.development.json
 D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\onilne-service\onilne-service\obj\Debug\net8.0\swae.build.ex.cache
+D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-s.0057E659.Up2Date
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-service.dll
 D:\onilne-service\onilne-service\obj\Debug\net8.0\refint\onilne-service.dll
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-service.pdb
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-service.genruntimeconfig.cache
 D:\onilne-service\onilne-service\obj\Debug\net8.0\ref\onilne-service.dll
-D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

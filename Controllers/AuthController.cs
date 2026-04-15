@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using onilne_service.Contract;
 using onilne_service.DTOs;
 using onilne_service.Model;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -117,25 +117,38 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
                 return BadRequest("Invalid OTP");
 
             _cache.Remove(model.Email);
+            var normalizedEmail = NormalizeEmail(model.Email);
 
-            var user = new ApplicationUser
+            var existingUser = await _userManager.Users.FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
+
+            if (existingUser != null)
             {
-                UserName = model.Email,
-                Email = model.Email,
-                PhoneNumber = model.PhoneNumber,
-                NormalizedCustomEmail = NormalizeEmail(model.Email)
-            };
+                var token = GenerateJwtToken(existingUser);
+                return Ok(new
+                {
+                    token,
+                    status = true,
+                    message = "Login successful"
+                });
+            }
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    PhoneNumber = model.PhoneNumber,
+                    NormalizedCustomEmail = NormalizeEmail(model.Email)
+                };
 
-            var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await _userManager.CreateAsync(user, model.Password);
 
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
+                if (!result.Succeeded)
+                    return BadRequest(result.Errors);
 
-            var token = GenerateJwtToken(user);
+            var newToken = GenerateJwtToken(user);
 
             return Ok(new
             {
-                token = token,
+                token = newToken,
                 status = true,
                 message = "Registration successful"
             });
@@ -151,6 +164,10 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
 
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
+                var otp = new Random().Next(100000, 999999).ToString();
+                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
+
+                await _emailService.SendOtpAsync(model.Email, otp);
                 var token = GenerateJwtToken(user);
 
                 return Ok(new AuthResponseDto
