@@ -3,43 +3,51 @@ using onilne_service.Contract;
 using onilne_service.Model;
 using System.Net;
 using System.Net.Mail;
+using Resend;
 
 public class EmailService: IEmailService
 {
     private readonly EmailSettings _settings;
     private readonly IConfiguration _config;
-
-    public EmailService(IOptions<EmailSettings> settings, IConfiguration config)
+    private readonly ILogger<EmailService> _logger;
+    public EmailService(IOptions<EmailSettings> settings, IConfiguration config, ILogger<EmailService> logger)
     {
         _settings = settings.Value;
         _config = config;
+        _logger = logger;
     }
 
     public async Task SendOtpAsync(string toEmail, string otp)
     {
-        var fromEmail = _config["EmailSettings:Email"];
-
-        if (string.IsNullOrEmpty(toEmail))
-            throw new Exception("Recipient email is NULL");
-
-        if (string.IsNullOrEmpty(fromEmail))
-            throw new Exception("Sender email is NULL (check appsettings)");
-
-        var client = new SmtpClient(_config["EmailSettings:Host"], int.Parse(_config["EmailSettings:Port"]))
+        try
         {
-            Credentials = new NetworkCredential(fromEmail, _config["EmailSettings:Password"]),
-            EnableSsl = true
-        };
+            var apiKey = _config["Resend:ApiKey"];
 
-        var mail = new MailMessage
+            if (string.IsNullOrEmpty(apiKey))
+                throw new Exception("Resend API key is missing");
+
+            var resend = ResendClient.Create(apiKey);
+
+            var response = await resend.EmailSendAsync(new EmailMessage()
+            {
+                From = "noreply@voltmart.uk",
+                To = toEmail,
+                Subject = "Your OTP Code",
+                HtmlBody = $"<h2>Your OTP is: {otp}</h2>"
+            });
+
+            if (response == null)
+            {
+                _logger.LogError("Resend returned null response for {Email}", toEmail);
+                throw new Exception("Failed to send email");
+            }
+
+            _logger.LogInformation("OTP email sent successfully to {Email}", toEmail);
+        }
+        catch (Exception ex)
         {
-            From = new MailAddress(fromEmail),
-            Subject = "OTP Code",
-            Body = $"Your OTP is {otp}"
-        };
-
-        mail.To.Add(toEmail);
-
-        await client.SendMailAsync(mail);
+            _logger.LogError(ex, "Error sending OTP to {Email}", toEmail);
+            throw;
+        }
     }
 }
