@@ -5,5 +5,6 @@ namespace onilne_service.Model
     public class ApplicationUser : IdentityUser
     {
         public string NormalizedCustomEmail { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
     }
 }

@@ -5,6 +5,8 @@ namespace onilne_service.DTOs
     public class RegisterDto
     {
         [Required]
+        public string Name { get; set; } = string.Empty;
+        [Required]
         public string PhoneNumber { get; set; } = string.Empty;
         [Required]
         [EmailAddress]

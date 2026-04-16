@@ -51,22 +51,22 @@ namespace onilne_service.Controllers
         }
 
         [HttpPost("register")]
-public async Task<IActionResult> Register([FromBody] RegisterDto model)
-{
-    try
-    {
-        if (!ModelState.IsValid)
+        public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            _logger.LogWarning("Invalid model for {Email}", model?.Email);
-            return BadRequest(ModelState);
-        }
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Invalid model for {Email}", model?.Email);
+                    return BadRequest(ModelState);
+                }
 
-        var userExists = await _userManager.FindByNameAsync(model.Email);
-        if (userExists != null)
-        {
-            _logger.LogInformation("User already exists: {Email}", model.Email);
-            return BadRequest("User already exists!");
-        }
+                var userExists = await _userManager.FindByNameAsync(model.Email);
+                if (userExists != null)
+                {
+                    _logger.LogInformation("User already exists: {Email}", model.Email);
+                    return BadRequest("User already exists!");
+                }
 
                 var normalizedEmail = NormalizeEmail(model.Email);
 
@@ -81,34 +81,36 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
 
 
                 var userWithPhone = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == model.PhoneNumber);
-                if (userWithPhone != null) {
+                if (userWithPhone != null)
+                {
                     _logger.LogInformation("Phone Number already exists: {PhoneNumber}", model.PhoneNumber);
                     return BadRequest("Phone Number already exists!");
                 }
 
-        if (_cache.TryGetValue(model.Email, out _))
-        {
-            _logger.LogInformation("OTP already sent for {Email}", model.Email);
-            return BadRequest("OTP already sent. Please wait.");
+                if (_cache.TryGetValue(model.Email, out _))
+                {
+                    _logger.LogInformation("OTP already sent for {Email}", model.Email);
+                    return BadRequest("OTP already sent. Please wait.");
+                }
+
+                var otp = new Random().Next(100000, 999999).ToString();
+                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
+
+                await _emailService.SendOtpAsync(model.Email, otp);
+
+                _logger.LogInformation("OTP sent to {Email}", model.Email);
+
+                return Ok(new { success = true, message = "OTP sent successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Register for {Email}", model?.Email);
+                return StatusCode(500, "Something went wrong");
+            }
         }
-
-        var otp = new Random().Next(100000, 999999).ToString();
-        _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
-
-        await _emailService.SendOtpAsync(model.Email, otp);
-
-        _logger.LogInformation("OTP sent to {Email}", model.Email);
-
-        return Ok(new { success = true, message = "OTP sent successfully" });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in Register for {Email}", model?.Email);
-        return StatusCode(500, "Something went wrong");
-    }
-}
         [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp(VerifyOtp model) {
+        public async Task<IActionResult> VerifyOtp(VerifyOtp model)
+        {
             var storedOtp = _cache.Get<string>(model.Email);
             if (storedOtp == null)
                 return BadRequest("OTP expired");
@@ -131,18 +133,19 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
                     message = "Login successful"
                 });
             }
-                var user = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    PhoneNumber = model.PhoneNumber,
-                    NormalizedCustomEmail = normalizedEmail
-                };
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber,
+                NormalizedCustomEmail = normalizedEmail,
+                Name = model.Name
+            };
 
-                var result = await _userManager.CreateAsync(user, model.Password);
+            var result = await _userManager.CreateAsync(user, model.Password);
 
-                if (!result.Succeeded)
-                    return BadRequest(result.Errors);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
             var newToken = GenerateJwtToken(user);
 
@@ -163,9 +166,40 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
             var user = await _userManager.Users
                 .FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
 
-            //otp login 
-            if(model.Password == null)
+            if(user == null)
             {
+               return BadRequest(new ResponseStatus
+                {
+                    Status = false,
+                    Message = "No User Found."
+                });
+            }
+
+            //otp login 
+            if (user != null && !string.IsNullOrEmpty(model.Password))
+            {
+
+                var isPasswordVaild = await _userManager.CheckPasswordAsync(user, model.Password);
+                if (!isPasswordVaild)
+                {
+                    return BadRequest(new ResponseStatus
+                    {
+                        Status = false,
+                        Message = "Wrong Password"
+                    });
+                }
+
+                var token = GenerateJwtToken(user);
+
+                return Ok(new
+                {
+                    Token = token,
+                    status = true,
+                    Message = "login successfull"
+                });
+
+            }
+
                 var otp = new Random().Next(100000, 999999).ToString();
                 _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
 
@@ -176,30 +210,8 @@ public async Task<IActionResult> Register([FromBody] RegisterDto model)
                     Status = true,
                     Message = "Otp sent successfully"
                 });
-            }
-
-        var isPasswordVaild = await _userManager.CheckPasswordAsync(user, model.Password);
-           if(!isPasswordVaild)
-            {
-                return BadRequest(new ResponseStatus
-                {
-                    Status = false,
-                    Message = "Wrong Password"
-                });
-
-            }
-                var token = GenerateJwtToken(user);
-
-            return Ok(new
-            {
-                Token = token,
-                status = true,
-                Message = "login successfull"
-            });
-           
-
-            
         }
+
         private string NormalizeEmail(string email)
         {
             var parts = email.Split('@');
