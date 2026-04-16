@@ -160,7 +160,6 @@ namespace onilne_service.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto model)
         {
-            //normal login
             var normalizedEmail = NormalizeEmail(model.Email);
 
             var user = await _userManager.Users
@@ -175,7 +174,7 @@ namespace onilne_service.Controllers
                 });
             }
 
-            //otp login 
+            //normal login
             if (user != null && !string.IsNullOrEmpty(model.Password))
             {
 
@@ -200,6 +199,7 @@ namespace onilne_service.Controllers
 
             }
 
+            //otp login
                 var otp = new Random().Next(100000, 999999).ToString();
                 _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
 
@@ -210,6 +210,65 @@ namespace onilne_service.Controllers
                     Status = true,
                     Message = "Otp sent successfully"
                 });
+        }
+
+        [HttpGet("forget-password")]
+        public async Task<IActionResult> ForgetPassword(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return BadRequest(
+                    new ResponseStatus
+                    {
+                        Status = false,
+                        Message = "User Not Found."
+                    });
+            }
+
+            var otp = new Random().Next(100000, 999999).ToString();
+            _cache.Set(email, otp, TimeSpan.FromMinutes(5));
+
+            await _emailService.SendOtpAsync(email, otp);
+
+            return Ok(new ResponseStatus
+            {
+                Status = true,
+                Message = "Otp sent successfully to your registered email address."
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPassword model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return BadRequest(
+                    new ResponseStatus
+                    {
+                        Status = false,
+                        Message = "User Not Found."
+                    });
+            }
+
+            var cachedOtp = _cache.Get<string>(model.Email);
+
+            if (cachedOtp != model.Otp)
+            {
+                return BadRequest("Invalid OTP");
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var result = await _userManager.ResetPasswordAsync(user, token, model.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok("Password reset successfully");
         }
 
         private string NormalizeEmail(string email)

@@ -119,6 +119,58 @@
         }
       }
     },
+    "/api/Auth/forget-password": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/WeatherForecast": {
       "get": {
         "tags": [
@@ -182,11 +234,16 @@
       "RegisterDto": {
         "required": [
           "email",
+          "name",
           "password",
           "phoneNumber"
         ],
         "type": "object",
         "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
           "phoneNumber": {
             "minLength": 1,
             "type": "string"
@@ -207,6 +264,29 @@
         },
         "additionalProperties": false
       },
+      "ResetPassword": {
+        "required": [
+          "email",
+          "otp",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "otp": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "VerifyOtp": {
         "type": "object",
         "properties": {
@@ -223,6 +303,10 @@
             "nullable": true
           },
           "otp": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
             "type": "string",
             "nullable": true
           }

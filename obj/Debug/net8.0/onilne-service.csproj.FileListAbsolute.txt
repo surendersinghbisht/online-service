@@ -127,3 +127,4 @@ D:\onilne-service\onilne-service\obj\Debug\net8.0\refint\onilne-service.dll
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-service.pdb
 D:\onilne-service\onilne-service\obj\Debug\net8.0\onilne-service.genruntimeconfig.cache
 D:\onilne-service\onilne-service\obj\Debug\net8.0\ref\onilne-service.dll
+D:\onilne-service\onilne-service\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

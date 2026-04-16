@@ -1,6 +1,22 @@
 [
   {
     "ContainingType": "onilne_service.Controllers.AuthController",
+    "Method": "ForgetPassword",
+    "RelativePath": "api/Auth/forget-password",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "email",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",
     "HttpMethod": "POST",
@@ -26,6 +42,22 @@
       {
         "Name": "model",
         "Type": "onilne_service.DTOs.RegisterDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.AuthController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/Auth/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "onilne_service.DTOs.ResetPassword",
         "IsRequired": true
       }
     ],
