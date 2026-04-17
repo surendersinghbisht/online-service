@@ -81,6 +81,22 @@
   },
   {
     "ContainingType": "onilne_service.Controllers.AuthController",
+    "Method": "SetNewPassword",
+    "RelativePath": "api/Auth/set-new-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "onilne_service.DTOs.SetNewPassword",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.AuthController",
     "Method": "VerifyOtp",
     "RelativePath": "api/Auth/verify-otp",
     "HttpMethod": "POST",

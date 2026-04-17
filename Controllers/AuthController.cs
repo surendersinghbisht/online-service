@@ -41,7 +41,7 @@ namespace onilne_service.Controllers
 
             var otp = new Random().Next(100000, 999999).ToString();
 
-            _cache.Set(email, otp, TimeSpan.FromMinutes(5));
+            _cache.Set(email, otp, TimeSpan.FromMinutes(2));
 
             _cache.Set($"{email}_cooldown", true, TimeSpan.FromSeconds(60));
 
@@ -94,7 +94,7 @@ namespace onilne_service.Controllers
                 }
 
                 var otp = new Random().Next(100000, 999999).ToString();
-                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
+                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(2));
 
                 await _emailService.SendOtpAsync(model.Email, otp);
 
@@ -130,7 +130,9 @@ namespace onilne_service.Controllers
                 {
                     token,
                     status = true,
-                    message = "Login successful"
+                    message = "Login successful",
+                    name = $"{existingUser.Name}",
+                    email = existingUser.Email
                 });
             }
             var user = new ApplicationUser
@@ -170,8 +172,8 @@ namespace onilne_service.Controllers
                return BadRequest(new ResponseStatus
                 {
                     Status = false,
-                    Message = "No User Found."
-                });
+                    Message = "Invalid credentials."
+               });
             }
 
             //normal login
@@ -184,7 +186,7 @@ namespace onilne_service.Controllers
                     return BadRequest(new ResponseStatus
                     {
                         Status = false,
-                        Message = "Wrong Password"
+                        Message = "Invalid credentials"
                     });
                 }
 
@@ -194,14 +196,15 @@ namespace onilne_service.Controllers
                 {
                     Token = token,
                     status = true,
-                    Message = "login successfull"
+                    Message = "login sucessfull",
+                    Name = $"{user.Name}",
+                    email = $"{user.Email}"
                 });
-
             }
 
             //otp login
                 var otp = new Random().Next(100000, 999999).ToString();
-                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(5));
+                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(2));
 
                 await _emailService.SendOtpAsync(model.Email, otp);
 
@@ -222,12 +225,12 @@ namespace onilne_service.Controllers
                     new ResponseStatus
                     {
                         Status = false,
-                        Message = "User Not Found."
+                        Message = "Invalid credentials"
                     });
             }
 
             var otp = new Random().Next(100000, 999999).ToString();
-            _cache.Set(email, otp, TimeSpan.FromMinutes(5));
+            _cache.Set(email, otp, TimeSpan.FromMinutes(2));
 
             await _emailService.SendOtpAsync(email, otp);
 
@@ -236,6 +239,35 @@ namespace onilne_service.Controllers
                 Status = true,
                 Message = "Otp sent successfully to your registered email address."
             });
+        }
+
+        [HttpPost("set-new-password")]
+        public async Task<IActionResult> SetNewPassword(SetNewPassword model)
+        {
+            if (model == null)
+            {
+                return BadRequest("Invalid request");
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                return BadRequest("No user found");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                model.OldPassword,
+                model.NewPassword
+            );
+
+            if (result.Succeeded)
+            {
+                return Ok("Password changed successfully");
+            }
+
+            return BadRequest(result.Errors.Select(e => e.Description));
         }
 
         [HttpPost("reset-password")]
