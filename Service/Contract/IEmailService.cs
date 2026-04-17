@@ -1,4 +1,4 @@
-﻿namespace onilne_service.Contract
+﻿namespace onilne_service.Service.Contract
 {
     public interface IEmailService
     {

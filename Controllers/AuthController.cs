@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
-using onilne_service.Contract;
 using onilne_service.DTOs;
 using onilne_service.Model;
-using Microsoft.EntityFrameworkCore;
+using onilne_service.Service.Contract;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace onilne_service.Controllers
@@ -21,14 +23,16 @@ namespace onilne_service.Controllers
         private readonly IMemoryCache _cache;
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IBankService _bankService;
 
-        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger)
+        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger, IBankService bankService)
         {
             _userManager = userManager;
             _configuration = configuration;
             _cache = cache;
             _emailService = emailService;
             _logger = logger;
+            _bankService = bankService;
         }
 
         [HttpPost("send-otp")]
@@ -167,21 +171,34 @@ namespace onilne_service.Controllers
             var user = await _userManager.Users
                 .FirstOrDefaultAsync(x => x.NormalizedCustomEmail == normalizedEmail);
 
-            if(user == null)
+            if (user == null)
             {
-               return BadRequest(new ResponseStatus
+                return BadRequest(new ResponseStatus
                 {
                     Status = false,
                     Message = "Invalid credentials."
-               });
+                });
+            }
+           
+            if (string.IsNullOrEmpty(model.Password) && string.IsNullOrEmpty(model.Otp))
+            {
+                var otp = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(2));
+
+                await _emailService.SendOtpAsync(model.Email, otp);
+
+                return Ok(new ResponseStatus
+                {
+                    Status = true,
+                    Message = "OTP sent successfully"
+                });
             }
 
-            //normal login
-            if (user != null && !string.IsNullOrEmpty(model.Password))
+            if (!string.IsNullOrEmpty(model.Password) && string.IsNullOrEmpty(model.Otp))
             {
+                var isPasswordValid = await _userManager.CheckPasswordAsync(user, model.Password);
 
-                var isPasswordVaild = await _userManager.CheckPasswordAsync(user, model.Password);
-                if (!isPasswordVaild)
+                if (!isPasswordValid)
                 {
                     return BadRequest(new ResponseStatus
                     {
@@ -196,23 +213,45 @@ namespace onilne_service.Controllers
                 {
                     Token = token,
                     status = true,
-                    Message = "login sucessfull",
-                    Name = $"{user.Name}",
-                    email = $"{user.Email}"
+                    Message = "Login successful",
+                    Name = user.Name,
+                    email = user.Email
                 });
             }
 
-            //otp login
-                var otp = new Random().Next(100000, 999999).ToString();
-                _cache.Set(model.Email, otp, TimeSpan.FromMinutes(2));
+          
+            if (!string.IsNullOrEmpty(model.Otp))
+            {
+                var cachedOtp = _cache.Get<string>(model.Email);
 
-                await _emailService.SendOtpAsync(model.Email, otp);
-
-                return Ok(new ResponseStatus
+                if (cachedOtp == null || cachedOtp != model.Otp)
                 {
-                    Status = true,
-                    Message = "Otp sent successfully"
+                    return BadRequest(new ResponseStatus
+                    {
+                        Status = false,
+                        Message = "Invalid or expired OTP"
+                    });
+                }
+
+                _cache.Remove(model.Email);
+
+                var token = GenerateJwtToken(user);
+
+                return Ok(new
+                {
+                    Token = token,
+                    status = true,
+                    Message = "Login successful via OTP",
+                    Name = user.Name,
+                    email = user.Email
                 });
+            }
+
+            return BadRequest(new ResponseStatus
+            {
+                Status = false,
+                Message = "Invalid request"
+            });
         }
 
         [HttpGet("forget-password")]
@@ -241,6 +280,7 @@ namespace onilne_service.Controllers
             });
         }
 
+        [Authorize]
         [HttpPost("set-new-password")]
         public async Task<IActionResult> SetNewPassword(SetNewPassword model)
         {
@@ -264,10 +304,20 @@ namespace onilne_service.Controllers
 
             if (result.Succeeded)
             {
-                return Ok("Password changed successfully");
+                return Ok(
+                    new ResponseStatus
+                    {
+                        Status = true,
+                        Message = "Password changed successfully."
+                    }
+                    );
             }
 
-            return BadRequest(result.Errors.Select(e => e.Description));
+            return BadRequest(new ResponseStatus
+            {
+                Status = false,
+                Message = "Incorrect Password."
+            });
         }
 
         [HttpPost("reset-password")]
@@ -303,6 +353,24 @@ namespace onilne_service.Controllers
             return Ok("Password reset successfully");
         }
 
+        [Authorize]
+        [HttpGet("user-detail")]
+        public async Task<IActionResult> GetUserDetail()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var res = await _bankService.GetBankUserDetail(userId);
+            if(!res.Status)
+                return BadRequest(res.Message);
+
+            return Ok(res);
+        }
+
         private string NormalizeEmail(string email)
         {
             var parts = email.Split('@');
@@ -324,8 +392,8 @@ namespace onilne_service.Controllers
    );
 
             var token = new JwtSecurityToken(
-                issuer: "yourapp",
-                audience: "yourapp",
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)

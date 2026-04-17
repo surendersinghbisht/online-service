@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("onilne-service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+83cc1f7d51712525c2572674df6657026403aa2e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6f0eda7d34bf04698a3142b22ce6bb606b4375b")]
 [assembly: System.Reflection.AssemblyProductAttribute("onilne-service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("onilne-service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,12 +1,13 @@
-using App.Data;
+using onilne_service.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using onilne_service.Contract;
 using onilne_service.Model;
+using onilne_service.Service.Contract;
 using System.Text;
+using onilne_service.Service.Implementation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IBankService, BankService>();
+//builder.Services.AddScoped<IBankService, BankService>();
+//builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));

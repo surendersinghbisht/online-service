@@ -97,6 +97,16 @@
   },
   {
     "ContainingType": "onilne_service.Controllers.AuthController",
+    "Method": "GetUserDetail",
+    "RelativePath": "api/Auth/user-detail",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.AuthController",
     "Method": "VerifyOtp",
     "RelativePath": "api/Auth/verify-otp",
     "HttpMethod": "POST",
@@ -112,24 +122,19 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "onilne_service.Controllers.WeatherForecastController",
-    "Method": "Get",
-    "RelativePath": "WeatherForecast",
-    "HttpMethod": "GET",
+    "ContainingType": "onilne_service.Controllers.BankController",
+    "Method": "UpdateBankAccount",
+    "RelativePath": "api/Bank/update-bank-account",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
+    "Parameters": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[onilne_service.WeatherForecast, onilne-service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "model",
+        "Type": "onilne_service.Models.BankAccount",
+        "IsRequired": true
       }
     ],
-    "EndpointName": "GetWeatherForecast"
+    "ReturnTypes": []
   }
 ]

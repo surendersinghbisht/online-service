@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
-using onilne_service.Contract;
 using onilne_service.Model;
 using System.Net;
 using System.Net.Mail;
 using Resend;
+using onilne_service.Service.Contract;
 
 public class EmailService: IEmailService
 {
