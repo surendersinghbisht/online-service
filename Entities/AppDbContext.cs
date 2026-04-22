@@ -37,6 +37,11 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<CardsHistory> CardsHistories { get; set; }
 
     public virtual DbSet<EfmigrationsHistory> EfmigrationsHistories { get; set; }
+
+    public virtual DbSet<Upi> Upis { get; set; }
+
+    public virtual DbSet<UpiHistory> UpiHistories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -217,6 +222,33 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.MigrationId).HasMaxLength(150);
             entity.Property(e => e.ProductVersion).HasMaxLength(32);
+        });
+
+        modelBuilder.Entity<Upi>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.Id).HasMaxLength(50);
+            entity.Property(e => e.AccountHolderName).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.PhoneNumber).HasMaxLength(15);
+            entity.Property(e => e.UpiId).HasMaxLength(100);
+            entity.Property(e => e.UserId).HasMaxLength(450);
+        });
+
+        modelBuilder.Entity<UpiHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("UpiHistory");
+
+            entity.Property(e => e.Id).HasMaxLength(50);
+            entity.Property(e => e.AccountHolderName).HasMaxLength(100);
+            entity.Property(e => e.ArchivedAt).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.PhoneNumber).HasMaxLength(15);
+            entity.Property(e => e.UpiId).HasMaxLength(100);
+            entity.Property(e => e.UserId).HasMaxLength(450);
         });
 
         OnModelCreatingPartial(modelBuilder);

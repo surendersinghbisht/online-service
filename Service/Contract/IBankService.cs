@@ -8,5 +8,6 @@ namespace onilne_service.Service.Contract
         Task<ResponseStatus> AddCard(CardModel model);
         Task<ResponseData<UserDetail>> GetUserDetail(string userId);
         Task<ResponseStatus> AddBankAccount(BankAccountModel model);
+        Task<ResponseStatus> AddUpiDetail(UpiDetailModel model);
     }
 }

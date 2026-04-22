@@ -11,6 +11,7 @@
         public string? CardHolderName { get; set; } = null!;
 
         public string? UserId { get; set; } = null!;
+        public string? BankName { get; set; } = null!;
 
         public DateTime? CreatedAt { get; set; }
     }

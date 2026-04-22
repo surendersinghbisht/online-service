@@ -56,7 +56,7 @@ namespace onilne_service.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+        public async Task<IActionResult> Register(RegisterDto model)
         {
             try
             {
@@ -351,7 +351,11 @@ namespace onilne_service.Controllers
                 return BadRequest(result.Errors);
             }
 
-            return Ok("Password reset successfully");
+            return Ok(new ResponseStatus
+            {
+                Status = true,
+                Message = "Password reset successfully."
+            });
         }
 
         [Authorize]

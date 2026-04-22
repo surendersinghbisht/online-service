@@ -83,5 +83,26 @@ namespace onilne_service.Controllers
 
             return Ok(res);
         }
+
+
+        [HttpPost("update-upi")]
+        public async Task<IActionResult> UpdateUpiDetails(UpiDetailModel model)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest();
+            }
+
+            model.UserId = userId;
+
+            var res = await _bankService.AddUpiDetail(model);
+            if (!res.Status)
+            {
+                return BadRequest();
+            }
+
+            return Ok(res);
+        }
     }
 }

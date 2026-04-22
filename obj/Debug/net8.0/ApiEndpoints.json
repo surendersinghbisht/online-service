@@ -152,5 +152,21 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.BankController",
+    "Method": "UpdateUpiDetails",
+    "RelativePath": "api/Bank/update-upi",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "onilne_service.Models.UpiDetailModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   }
 ]

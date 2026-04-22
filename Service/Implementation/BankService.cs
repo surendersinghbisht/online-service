@@ -40,6 +40,7 @@ namespace onilne_service.Service.Implementation
                         CardHolderName = model.CardHolderName,
                         CardNumber = model.CardNumber,
                         MobileNumber = model.MobileNumber,
+                        BankName = model.BankName,
                         UserId = model.UserId,
                     };
 
@@ -70,6 +71,7 @@ namespace onilne_service.Service.Implementation
                         CardNumber = model.CardNumber,
                         MobileNumber = model.MobileNumber,
                         UserId = model.UserId,
+                        BankName = model.BankName,
                         CreatedAt = DateTime.UtcNow
                     };
 
@@ -181,74 +183,180 @@ namespace onilne_service.Service.Implementation
                 };
             }
         }
+        public async Task<ResponseStatus> AddUpiDetail(UpiDetailModel model)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (model == null)
+                {
+                    return new ResponseStatus
+                    {
+                        Status = false,
+                        Message = "Invalid request"
+                    };
+                }
+
+                var upiDetail = await _context.Upis.FirstOrDefaultAsync(x => x.UserId == model.UserId);
+
+                //if upi not exists
+                if (upiDetail == null)
+                {
+                    var newUpi = new Upi
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        AccountHolderName = model.AccountHolderName,
+                        PhoneNumber = model.PhoneNumber,
+                        UpiId = model.UpiId,
+                        UserId = model.UserId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _context.Upis.AddAsync(newUpi);
+                }
+                else
+                {
+                    var oldUpi = new UpiHistory
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        AccountHolderName = upiDetail.AccountHolderName,
+                        PhoneNumber = upiDetail.PhoneNumber,
+                        UpiId = upiDetail.UpiId,
+                        UserId = upiDetail.UserId,
+                        CreatedAt = upiDetail.CreatedAt,
+                        ArchivedAt = DateTime.UtcNow
+                    };
+
+                    await _context.UpiHistories.AddAsync(oldUpi);
+
+                    _context.Upis.Remove(upiDetail);
+
+                    var updatedUpi = new Upi
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        PhoneNumber = model.PhoneNumber,
+                        AccountHolderName = model.AccountHolderName,
+                        UpiId = model.UpiId,
+                        UserId = model.UserId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _context.Upis.AddAsync(updatedUpi);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new ResponseStatus
+                {
+                    Status = true,
+                    Message = upiDetail == null ? "UPI added successfully." : "UPI updated successfully."
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new ResponseStatus
+                {
+                    Status = false,
+                    Message = ex.Message
+                };
+            }
+        }
 
         public async Task<ResponseData<UserDetail>> GetUserDetail(string userId)
         {
             var response = new ResponseData<UserDetail>();
+
             try
             {
                 var user = await _context.AspNetUsers
-     .FirstOrDefaultAsync(x => x.Id == userId);
+                    .FirstOrDefaultAsync(x => x.Id == userId);
+
+                if (user == null)
+                {
+                    response.Status = false;
+                    response.Message = "User Not Found";
+                    return response;
+                }
 
                 var card = await _context.Cards
                     .FirstOrDefaultAsync(x => x.UserId == userId);
 
                 var bank = await _context.BankAccounts
                     .FirstOrDefaultAsync(x => x.UserId == userId);
+                var upi = await _context.Upis
+                    .FirstOrDefaultAsync(x => x.UserId == userId);
 
-                var result = new
-                {
-                    User = user,
-                    Card = card,
-                    BankAccount = bank
-                };
+                CardModel? cardDetail = null;
 
-                if (result == null)
+                if (card != null)
                 {
-                    response.Status = false;
-                    response.Message = "Not Found";
-                    return response;
+                    cardDetail = new CardModel
+                    {
+                        Id = card.Id,
+                        CardHolderName = card.CardHolderName,
+                        CardNumber = card.CardNumber,
+                        MobileNumber = card.MobileNumber,
+                        BankName = card.BankName,
+                        UserId = card.UserId,
+                        CreatedAt = card.CreatedAt
+                    };
                 }
 
-                var CardDetail = new CardModel
-                {
-                    CardHolderName = result.Card.CardHolderName,
-                    CardNumber = result.Card.CardNumber,
-                    CreatedAt = result.Card.CreatedAt.Value,
-                    MobileNumber = result.Card.MobileNumber,
-                    UserId = result.Card.UserId,
-                    Id = result.Card.Id
-                };
+                BankAccountModel? bankDetail = null;
 
-                var bankAccountDetail = new BankAccountModel
+                if (bank != null)
                 {
-                    AccountHolderName = result.BankAccount.AccountHolderName,
-                    CreatedAt = result.BankAccount.CreatedAt.Value,
-                    AccountNumber = result.BankAccount.AccountNumber,
-                    BankName = result.BankAccount.BankName,
-                    IFSC = result.BankAccount.Ifsccode,
-                    UserId = result.BankAccount.UserId,
-                    Id = result.BankAccount.Id
-                };
+                    bankDetail = new BankAccountModel
+                    {
+                        Id = bank.Id,
+                        AccountHolderName = bank.AccountHolderName,
+                        AccountNumber = bank.AccountNumber,
+                        BankName = bank.BankName,
+                        IFSC = bank.Ifsccode,
+                        UserId = bank.UserId,
+                        CreatedAt = bank.CreatedAt.Value
+                    };
+                }
+
+                UpiDetailModel? upiDetail = null;
+
+                if (upi != null)
+                {
+                    upiDetail = new UpiDetailModel
+                    {
+                        Id = bank.Id,
+                        AccountHolderName = upi.AccountHolderName,
+                        UpiId = upi.UpiId,
+                        PhoneNumber = upi.PhoneNumber,
+                        UserId = bank.UserId,
+                        CreatedAt = bank.CreatedAt.Value
+                    };
+                }
 
                 var data = new UserDetail
                 {
-                    Email = result.User.Email,
-                    Name = result.User.Name,
-                    UserID = result.User.Id,
-                    PhoneNumber = result.User.PhoneNumber,
-                    Card = CardDetail,
-                    BankAccount = bankAccountDetail
+                    Email = user.Email,
+                    Name = user.Name,
+                    UserID = user.Id,
+                    PhoneNumber = user.PhoneNumber,
+                    Card = cardDetail,
+                    BankAccount = bankDetail,
+                    Upi = upiDetail,
                 };
 
                 response.Data = data;
                 response.Status = true;
                 response.Message = "Successfully fetched details";
-                return response;
 
+                return response;
             }
             catch (Exception ex)
             {
+                response.Status = false;
+                response.Message = ex.Message;
                 return response;
             }
         }
