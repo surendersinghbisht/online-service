@@ -15,8 +15,8 @@ namespace onilne_service.Service.Implementation
 
         public async Task<UserDetail> GetUserDetails()
         {
-            var user = _context.Users.FirstOrDefault();
-            var bank = _context.BankCards.FirstOrDefault();
+            var user = _context.AspNetUsers.FirstOrDefault();
+            var bank = _context.Cards.FirstOrDefault();
 
             return new UserDetail
             {

@@ -9,17 +9,15 @@ public partial class BankAccountHistory
 
     public string BankAccountId { get; set; } = null!;
 
-    public string UserId { get; set; } = null!;
+    public string? BankName { get; set; }
 
-    public string BankName { get; set; } = null!;
+    public string? AccountNumber { get; set; }
 
-    public string CardNumber { get; set; } = null!;
+    public string? Ifsccode { get; set; }
 
-    public string MobileNumber { get; set; } = null!;
+    public string? AccountHolderName { get; set; }
 
-    public string CardHolderName { get; set; } = null!;
-
-    public DateTime? CreatedAt { get; set; }
+    public string? UserId { get; set; }
 
     public DateTime? ArchivedAt { get; set; }
 }

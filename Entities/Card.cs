@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace onilne_service.Entities;
 
-public partial class BankCard
+public partial class Card
 {
     public string Id { get; set; } = null!;
 

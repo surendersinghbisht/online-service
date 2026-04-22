@@ -59,7 +59,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ));
 
 // ✅ Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<AspNetUser, AspNetRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 

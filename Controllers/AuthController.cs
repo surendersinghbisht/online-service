@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using onilne_service.DTOs;
+using onilne_service.Entities;
 using onilne_service.Model;
 using onilne_service.Service.Contract;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,14 +19,14 @@ namespace onilne_service.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<AspNetUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthController> _logger;
         private readonly IBankService _bankService;
 
-        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger, IBankService bankService)
+        public AuthController(UserManager<AspNetUser> userManager, IConfiguration configuration, IMemoryCache cache, IEmailService emailService, ILogger<AuthController> logger, IBankService bankService)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -139,7 +140,7 @@ namespace onilne_service.Controllers
                     email = existingUser.Email
                 });
             }
-            var user = new ApplicationUser
+            var user = new AspNetUser
             {
                 UserName = model.Email,
                 Email = model.Email,
@@ -364,7 +365,7 @@ namespace onilne_service.Controllers
                 return Unauthorized();
             }
 
-            var res = await _bankService.GetBankUserDetail(userId);
+            var res = await _bankService.GetUserDetail(userId);
             if(!res.Status)
                 return BadRequest(res.Message);
 
@@ -379,7 +380,7 @@ namespace onilne_service.Controllers
         }
 
 
-        private string GenerateJwtToken(ApplicationUser user)
+        private string GenerateJwtToken(AspNetUser user)
         {
             var claims = new[]
             {

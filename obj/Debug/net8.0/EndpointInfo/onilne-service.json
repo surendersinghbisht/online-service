@@ -214,6 +214,37 @@
         }
       }
     },
+    "/api/Bank/update-card": {
+      "post": {
+        "tags": [
+          "Bank"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Bank/update-bank-account": {
       "post": {
         "tags": [
@@ -223,17 +254,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BankAccount"
+                "$ref": "#/components/schemas/BankAccountModel"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/BankAccount"
+                "$ref": "#/components/schemas/BankAccountModel"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/BankAccount"
+                "$ref": "#/components/schemas/BankAccountModel"
               }
             }
           }
@@ -248,13 +279,7 @@
   },
   "components": {
     "schemas": {
-      "BankAccount": {
-        "required": [
-          "bankName",
-          "cardHolderName",
-          "cardNumber",
-          "mobileNumber"
-        ],
+      "BankAccountModel": {
         "type": "object",
         "properties": {
           "id": {
@@ -266,28 +291,55 @@
             "nullable": true
           },
           "bankName": {
-            "maxLength": 100,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
-          "cardNumber": {
-            "maxLength": 20,
-            "minLength": 1,
-            "type": "string"
+          "accountHolderName": {
+            "type": "string",
+            "nullable": true
           },
-          "mobileNumber": {
-            "maxLength": 15,
-            "minLength": 1,
-            "type": "string"
+          "ifsc": {
+            "type": "string",
+            "nullable": true
           },
-          "cardHolderName": {
-            "maxLength": 100,
-            "minLength": 1,
-            "type": "string"
+          "accountNumber": {
+            "type": "string",
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CardModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "mobileNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardHolderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false

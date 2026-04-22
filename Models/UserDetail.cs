@@ -8,6 +8,8 @@ namespace onilne_service.DTOs
         public string Name { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public BankAccount Bank { get; set; }
+        public CardModel Card { get; set; }
+        public BankAccountModel BankAccount { get; set; }
+
     }
 }

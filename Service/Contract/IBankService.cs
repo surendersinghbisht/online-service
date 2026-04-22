@@ -5,7 +5,8 @@ namespace onilne_service.Service.Contract
 {
     public interface IBankService
     {
-        Task<ResponseStatus> AddBankAccount(BankAccount model);
-        Task<ResponseData<UserDetail>> GetBankUserDetail(string userId);
+        Task<ResponseStatus> AddCard(CardModel model);
+        Task<ResponseData<UserDetail>> GetUserDetail(string userId);
+        Task<ResponseStatus> AddBankAccount(BankAccountModel model);
     }
 }

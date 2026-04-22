@@ -123,7 +123,7 @@
   },
   {
     "ContainingType": "onilne_service.Controllers.BankController",
-    "Method": "UpdateBankAccount",
+    "Method": "UpdateBankDetails",
     "RelativePath": "api/Bank/update-bank-account",
     "HttpMethod": "POST",
     "IsController": true,
@@ -131,7 +131,23 @@
     "Parameters": [
       {
         "Name": "model",
-        "Type": "onilne_service.Models.BankAccount",
+        "Type": "onilne_service.Models.BankAccountModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "onilne_service.Controllers.BankController",
+    "Method": "UpdateCardDetails",
+    "RelativePath": "api/Bank/update-card",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "onilne_service.Models.CardModel",
         "IsRequired": true
       }
     ],
